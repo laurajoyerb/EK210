@@ -1,6 +1,6 @@
 #include <math.h>
 
-//PIN VALUES
+// PIN VALUES
 const int RED = 2;    //RED LED
 const int GREEN = 3;  //GREEN LED
 const int TPOWER = 8; //THERMISTER POWER
@@ -8,14 +8,14 @@ const int TREAD = A0; //THERMISTER READ
 const int relay1 = 4; //RELAY PIN
 const int BUTTON = 9; //BUTTON PIN
 
-//Temp Target
+// Temp Target
 const double TARGETTEMP = 50.;
 
-//Heating State
+// Heating State
 bool STATE = false;
 bool switched = false; //For button edge detection
 
-//Timer
+// Timer
 double startTime = millis();
 double previousTime = millis();
 double currentTime = 0;
@@ -42,6 +42,7 @@ void setup() {
   pinMode(GREEN, OUTPUT);
   pinMode(TPOWER, OUTPUT);
   pinMode(relay1, OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
 
   pinMode(BUTTON, INPUT);
 
@@ -52,6 +53,10 @@ void setup() {
 
 // the loop function runs over and over again forever
 void loop() {
+  digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
+  delay(1000);                       // wait for a second
+  digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
+  delay(1000); 
   double temperature = readTemperature(); //Reads thermister
   //Printing Stuff
   //if (previousTime + interval >= millis()) {
@@ -87,7 +92,7 @@ void loop() {
   delay(500);
 }
 
-//Function to read temperature
+// Function to read temperature
 float readTemperature() {
   digitalWrite(TPOWER, HIGH); //powers the thermister so that it can be read
   int tValue = analogRead(TREAD); //reads the voltage in the middle of the voltage devider
@@ -107,7 +112,7 @@ float readTemperature() {
   return steinhart;
 }
 
-//Function to control LEDs
+// Function to control LEDs
 void LEDControl(double temperature) {
   if (temperature > TARGETTEMP) {
     digitalWrite(RED, HIGH);
