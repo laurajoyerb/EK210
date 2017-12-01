@@ -22,11 +22,18 @@ double currentTime = 0;
 
 double interval = 500.;
 
-//
-#define THERMISTORNOMINAL 10000
-#define TEMPERATURENOMINAL 25
-#define BCOEFFICIENT 3950 // The beta coefficient of the thermistor (usually 3000-4000)
-#define SERIESRESISTOR 10000    
+#define THERMISTORPIN A0         
+// resistance at 25 degrees C
+#define THERMISTORNOMINAL 10000      
+// temp. for nominal resistance (almost always 25 C)
+#define TEMPERATURENOMINAL 25   
+// how many samples to take and average, more takes longer
+// but is more 'smooth'
+#define NUMSAMPLES 5
+// The beta coefficient of the thermistor (usually 3000-4000)
+#define BCOEFFICIENT 3950
+// the value of the 'other' resistor
+#define SERIESRESISTOR 10000       
 
 
 // the setup function runs once when you press reset or power the board
@@ -47,13 +54,15 @@ void setup() {
 void loop() {
   double temperature = readTemperature(); //Reads thermister
   //Printing Stuff
+  //if (previousTime + interval >= millis()) {
     previousTime = millis();
     printData(temperature);
     LEDControl(temperature);
+  //}
 
 
-  //BUTTON CONTROL
-  /* if (digitalRead(BUTTON) == HIGH) {
+  /*//BUTTON CONTROL
+  if (digitalRead(BUTTON) == HIGH) {
     startTime = millis();
     if (!switched) {
       switched = true;
@@ -62,7 +71,7 @@ void loop() {
   }
   if (digitalRead(BUTTON) == LOW) {
     switched = false;
-  } 
+  }
 
   //Simple Temperature Control
   if (STATE) {
@@ -74,7 +83,7 @@ void loop() {
   } else {
     digitalWrite(relay1, LOW);
   }
-   */
+*/
   delay(500);
 }
 
@@ -86,31 +95,20 @@ float readTemperature() {
   digitalWrite(TPOWER, LOW);  //turns off power to the thermister so that it doesn't heat up
   double tResistance = SERIESRESISTOR * (1023./tValue - 1); //converts the ADC value from between 0-1023 to the value of the resistance of the thermister
 
+  Serial.println(tResistance);
   float steinhart;
   steinhart = tResistance / THERMISTORNOMINAL;     // (R/Ro)
   steinhart = log(steinhart);                  // ln(R/Ro)
   steinhart /= BCOEFFICIENT;                   // 1/B * ln(R/Ro)
   steinhart += 1.0 / (TEMPERATURENOMINAL + 273.15); // + (1/To)
   steinhart = 1.0 / steinhart;                 // Invert
-  steinhart -= 273.15;                         // convert to C
+  steinhart -= 273.15; 
 
   return steinhart;
 }
 
 //Function to control LEDs
 void LEDControl(double temperature) {
-//  if (temperature < (TARGETTEMP-3))
-//  {
-//    digitalWrite(RED, LOW);
-//    digitalWrite(GREEN, HIGH);
-//  }
-//  else if (abs(temperature - TARGETTEMP) <= 3)
-//  {
-//    digitalWrite(RED, HIGH);
-//    digitalWrite(GREEN, HIGH);
-//  }
-//  else if (
-  
   if (temperature > TARGETTEMP) {
     digitalWrite(RED, HIGH);
     digitalWrite(GREEN, LOW);
