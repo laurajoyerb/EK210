@@ -10,15 +10,24 @@ const int BUTTON = 9; //BUTTON PIN
 
 // Temp Target
 const double TARGETTEMP = 50.;
+double temperature;
 
 // Heating State
 bool STATE = false;
 bool switched = false; //For button edge detection
 
+// Regime 0 is not running
+// Regime 1 is begin heating to 30ºish degrees
+// Regime 2 is coasting to 60ºC
+// Regime 3 is holding temp for 60 seconds
+// Regime 4 is cooling back down
+int regime = 0;
+
 // Timer
 double startTime = millis();
 double previousTime = millis();
 double currentTime = 0;
+double steadyState;
 
 double interval = 500.;
 
@@ -53,43 +62,59 @@ void setup() {
 
 // the loop function runs over and over again forever
 void loop() {
-  digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-  delay(1000);                       // wait for a second
-  digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
-  delay(1000); 
-  double temperature = readTemperature(); //Reads thermister
-  //Printing Stuff
-  //if (previousTime + interval >= millis()) {
-    previousTime = millis();
-    printData(temperature);
-    LEDControl(temperature);
-  //}
 
-
-  /*//BUTTON CONTROL
-  if (digitalRead(BUTTON) == HIGH) {
+  // BUTTON CONTROL
+  if (digitalRead(BUTTON) == HIGH) 
+  {
     startTime = millis();
-    if (!switched) {
+    if (!switched) 
+    {
       switched = true;
       STATE = !STATE;
     }
   }
-  if (digitalRead(BUTTON) == LOW) {
+  
+  if (digitalRead(BUTTON) == LOW) 
+  {
     switched = false;
   }
+  
+    temperature = readTemperature(); //Reads thermistor
+    // Printing Stuff
+    printData(temperature);
+    LEDControl(temperature);
+    if (STATE)
+    {
+      if (regime == 0)
+      {
+        regime = 1;
+        digitalWrite(relay1, HIGH);
+      }
 
-  //Simple Temperature Control
-  if (STATE) {
-    if (temperature > TARGETTEMP) {
-      digitalWrite(relay1, HIGH);
-    } else if (temperature <= TARGETTEMP) {
-      digitalWrite(relay1, LOW);
+      if ( regime == 1 && temperature > 30 )
+      {
+        regime = 2;
+        digitalWrite(relay1, LOW);
+      }
+      
+      if ( abs(temperature - TARGETTEMP) <= 3 && regime == 2)
+      {
+      regime = 3;
+      steadyState = millis();
+      }
+
+      if ( regime == 3 && (steadyState - millis()) == 6000 )
+      {
+        regime = 4;
+        digitalWrite(relay1, LOW);
+      }
+
+      if ( regime == 4 && temperature < 40 )
+      {
+        regime = 0;
+      }
     }
-  } else {
-    digitalWrite(relay1, LOW);
-  }
-*/
-  delay(500);
+      delay(100); 
 }
 
 // Function to read temperature
@@ -114,15 +139,22 @@ float readTemperature() {
 
 // Function to control LEDs
 void LEDControl(double temperature) {
-  if (temperature > TARGETTEMP) {
+  if (regime != 0)
+  {
     digitalWrite(RED, HIGH);
-    digitalWrite(GREEN, LOW);
-  } else if (temperature < TARGETTEMP) {
+  }
+  else
+  {
     digitalWrite(RED, LOW);
-    digitalWrite(GREEN, HIGH);    
-  } else if (temperature == TARGETTEMP) {
-    digitalWrite(RED, HIGH);
+  }
+
+  if (regime == 3)
+  {
     digitalWrite(GREEN, HIGH);
+  }
+    else
+  {
+    digitalWrite(GREEN, LOW);
   }
 }
 
