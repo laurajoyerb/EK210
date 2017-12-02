@@ -8,9 +8,8 @@ const int TREAD = A0; //THERMISTER READ
 const int relay1 = 4; //RELAY PIN
 const int BUTTON = 9; //BUTTON PIN
 
-// Temp Target
-const double TARGETTEMP = 50.;
-double temperature;
+double temperature = 0;
+double oldTemp;
 
 // Heating State
 bool STATE = false;
@@ -70,51 +69,72 @@ void loop() {
     if (!switched) 
     {
       switched = true;
-      STATE = !STATE;
+      STATE = !STATE; // if the button is pushed when the STATE is already true (the device is running), it will be set to false and all heating will stop
     }
   }
   
-  if (digitalRead(BUTTON) == LOW) 
+  if (digitalRead(BUTTON) == LOW) // switched is only true while the user is actively pushing the button
   {
     switched = false;
   }
-  
+    oldTemp = temperature;
     temperature = readTemperature(); //Reads thermistor
+    
     // Printing Stuff
     printData(temperature);
     LEDControl(temperature);
-    if (STATE)
+    if (STATE) // only executes if button has been pushed and kill command has not been given
     {
-      if (regime == 0)
+      switch (regime)
       {
-        regime = 1;
-        digitalWrite(relay1, HIGH);
+        case 0:
+        {
+          regime = 1;
+          digitalWrite(relay1, HIGH); // starts heating
+          break;
+        }
+        case 1:
+        {
+          if (temperature > 30)
+          {
+            regime = 2;
+            digitalWrite(relay1, LOW); // turns off power to begin coasting
+            break;
+          }
+        }
+        case 2:
+        {
+//          if ( (temperature - oldTemp) < 0 ) // executes if coasting doesn't work; should only execute if something went wrong
+//          {
+//            
+//          }
+          if (abs(temperature - 60) <= 3)
+          {
+            regime = 3;
+            steadyState = millis(); // starts 60 second timer
+          }
+          break;
+        }
+        case 3:
+        {
+          if ( (steadyState - millis()) == 6000 )
+          {
+            regime = 4;
+            digitalWrite(relay1, LOW);
+          }
+          break;
+        }
+        case 4:
+        {
+          if (temperature < 40)
+          {
+            regime = 0;
+          }
+          break;
+        }
       }
-
-      if ( regime == 1 && temperature > 30 )
-      {
-        regime = 2;
-        digitalWrite(relay1, LOW);
-      }
-      
-      if ( abs(temperature - TARGETTEMP) <= 3 && regime == 2)
-      {
-      regime = 3;
-      steadyState = millis();
-      }
-
-      if ( regime == 3 && (steadyState - millis()) == 6000 )
-      {
-        regime = 4;
-        digitalWrite(relay1, LOW);
-      }
-
-      if ( regime == 4 && temperature < 40 )
-      {
-        regime = 0;
-      }
-    }
-      delay(100); 
+      delay(100);
+    } 
 }
 
 // Function to read temperature
