@@ -104,10 +104,13 @@ void loop() {
         }
         case 2:
         {
-//          if ( (temperature - oldTemp) < 0 ) // executes if coasting doesn't work; should only execute if something went wrong
-//          {
-//            
-//          }
+          if ( (temperature - oldTemp) < 0  && temperature < 60) // executes if coasting doesn't work; should only execute if something went wrong
+          {
+            double diff = 60 - temperature;
+            digitalWrite(relay1, HIGH);
+            delay(10000 * diff/5); // heats for 10 seconds
+            digitalWrite(relay1, LOW);
+          }
           if (abs(temperature - 60) <= 3)
           {
             regime = 3;
@@ -117,7 +120,7 @@ void loop() {
         }
         case 3:
         {
-          if ( (steadyState - millis()) == 6000 )
+          if ( (steadyState - millis()) == 60000 )
           {
             regime = 4;
             digitalWrite(relay1, LOW);
