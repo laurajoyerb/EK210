@@ -1,12 +1,12 @@
 #include <math.h>
 
 // PIN VALUES
-const int RED = 2;    //RED LED
-const int GREEN = 3;  //GREEN LED
-const int TPOWER = 8; //THERMISTER POWER
-const int TREAD = A0; //THERMISTER READ
-const int relay1 = 4; //RELAY PIN
-const int BUTTON = 9; //BUTTON PIN
+const int RED = 2;    // RED LED
+const int GREEN = 3;  // GREEN LED
+const int TPOWER = 8; // THERMISTOR POWER
+const int TREAD = A0; // THERMISTOR READ
+const int relay1 = 7; // RELAY PIN
+const int BUTTON = 9; // BUTTON PIN
 
 double temperature = 0;
 double oldTemp;
@@ -16,7 +16,8 @@ bool STATE = false;
 bool switched = false; //For button edge detection
 
 // Regime 0 is not running
-// Regime 1 is begin heating to 30ºish degrees
+// Regime 1 is essentially a dummy stage too go to regime 99 because it wasn't working
+// Regime 99 is heating to 30ºish degrees
 // Regime 2 is coasting to 60ºC
 // Regime 3 is holding temp for 60 seconds
 // Regime 4 is cooling back down
@@ -28,7 +29,7 @@ double previousTime = millis();
 double currentTime = 0;
 double steadyState;
 
-double interval = 500.;
+long interval = 500.;
 
 #define THERMISTORPIN A0         
 // resistance at 25 degrees C
@@ -50,94 +51,110 @@ void setup() {
   pinMode(GREEN, OUTPUT);
   pinMode(TPOWER, OUTPUT);
   pinMode(relay1, OUTPUT);
-  pinMode(LED_BUILTIN, OUTPUT);
 
-  pinMode(BUTTON, INPUT);
+  pinMode(BUTTON, INPUT_PULLUP);
 
+  digitalWrite(relay1, LOW);
   digitalWrite(relay1, LOW);
   
   Serial.begin(9600); //Starts serial connection so temperature can be sent to computer
+  Serial.print("              Running the setup function!                  ");
+  Serial.println("");
 }
 
 // the loop function runs over and over again forever
 void loop() {
-
+  
+  Serial.print(STATE);
+  Serial.print(" ");
+  Serial.print(regime);
+  Serial.println("");
+  
   // BUTTON CONTROL
-  if (digitalRead(BUTTON) == HIGH) 
+  if (digitalRead(BUTTON) == LOW) 
   {
     startTime = millis();
     if (!switched) 
     {
       switched = true;
       STATE = !STATE; // if the button is pushed when the STATE is already true (the device is running), it will be set to false and all heating will stop
+      if (!STATE)
+      {
+        regime = 0;
+      }
     }
   }
   
-  if (digitalRead(BUTTON) == LOW) // switched is only true while the user is actively pushing the button
+  if (digitalRead(BUTTON) == HIGH) // switched is only true while the user is actively pushing the button
   {
     switched = false;
   }
-    oldTemp = temperature;
-    temperature = readTemperature(); //Reads thermistor
-    
-    // Printing Stuff
-    printData(temperature);
-    LEDControl(temperature);
-    if (STATE) // only executes if button has been pushed and kill command has not been given
+
+  oldTemp = temperature;
+  temperature = readTemperature(); //Reads thermistor
+  
+  // Printing Stuff
+  printData(temperature);
+
+  LEDControl(temperature);
+
+  if (STATE) // only executes if button has been pushed and kill command has not been given
+  {
+    if (regime == 0)
     {
-      switch (regime)
+      regime = 1;
+      digitalWrite(relay1, HIGH); // starts heating
+    }
+    else if (regime == 1)
+    {
+      if (temperature > 20)
       {
-        case 0:
-        {
-          regime = 1;
-          digitalWrite(relay1, HIGH); // starts heating
-          break;
-        }
-        case 1:
-        {
-          if (temperature > 30)
-          {
-            regime = 2;
-            digitalWrite(relay1, LOW); // turns off power to begin coasting
-            break;
-          }
-        }
-        case 2:
-        {
-          if ( (temperature - oldTemp) < 0  && temperature < 60) // executes if coasting doesn't work; should only execute if something went wrong
-          {
-            double diff = 60 - temperature;
-            digitalWrite(relay1, HIGH);
-            delay(10000 * diff/5); // heats for 10 seconds
-            digitalWrite(relay1, LOW);
-          }
-          if (abs(temperature - 60) <= 3)
-          {
-            regime = 3;
-            steadyState = millis(); // starts 60 second timer
-          }
-          break;
-        }
-        case 3:
-        {
-          if ( (steadyState - millis()) == 60000 )
-          {
-            regime = 4;
-            digitalWrite(relay1, LOW);
-          }
-          break;
-        }
-        case 4:
-        {
-          if (temperature < 40)
-          {
-            regime = 0;
-          }
-          break;
-        }
+        regime = 99;
+        Serial.print("              CHANGE TO REGIME 10               ");
+        digitalWrite(relay1, HIGH); // keeps power on
       }
-      delay(100);
-    } 
+    }
+    else if (regime == 99)
+    {
+      if (temperature > 30)
+      {
+        regime = 2;
+        Serial.print("              CHANGE TO REGIME 2               ");
+        digitalWrite(relay1, LOW); // turns off power to begin coasting
+      }
+    }
+    else if (regime == 2)
+    {
+//      if ( (temperature - oldTemp) < 0  && temperature < 60) // executes if coasting doesn't work; should only execute if something went wrong
+//      {
+//        double diff = 60 - temperature;
+//        digitalWrite(relay1, HIGH);
+//        delay(10000 * diff/5); // heats for 10 seconds for every 5ºC increase that is needed
+//        digitalWrite(relay1, LOW);
+//      }
+      if (abs(temperature - 60) <= 3)
+      {
+        regime = 3;
+        steadyState = millis(); // starts 60 second timer
+      }
+    }
+    else if (regime == 3)
+    {
+      if ( (steadyState - millis()) == 60000 )
+      {
+        regime = 4;
+        digitalWrite(relay1, LOW);
+      }
+    }
+    else if (regime == 4)
+    {
+      if (temperature < 40)
+      {
+        regime = 0;
+      }
+    }
+    delay(500);
+  } 
 }
 
 // Function to read temperature
@@ -148,7 +165,6 @@ float readTemperature() {
   digitalWrite(TPOWER, LOW);  //turns off power to the thermister so that it doesn't heat up
   double tResistance = SERIESRESISTOR * (1023./tValue - 1); //converts the ADC value from between 0-1023 to the value of the resistance of the thermister
 
-  Serial.println(tResistance);
   float steinhart;
   steinhart = tResistance / THERMISTORNOMINAL;     // (R/Ro)
   steinhart = log(steinhart);                  // ln(R/Ro)
