@@ -10,6 +10,7 @@ const int BUTTON = 9; // BUTTON PIN
 
 double temperature = 0; // Setup variable to store current temperature
 double oldTemp;         // Setup variable to store previous variable for temp change.
+double startTemp;       // Setup variable for finding temp to change between regime 1 and 2.
 
 // Heating State
 bool STATE = false;     // For turning on and off heating. Backup for safety.
@@ -96,18 +97,19 @@ void loop() {
   // Printing Stuff
   printData(temperature);
 
-  LEDControl(temperature);
+  LEDControl();
 
   if (STATE) // only executes if button has been pushed and kill command has not been given
   {
     if (regime == 0)
     {
+      startTemp = temperature;
       regime = 1;
       digitalWrite(relay1, HIGH); // starts heating
     }
     else if (regime == 1)
     {
-      if (temperature > 30)
+      if (temperature > (startTemp + 5.)) /* Changed from 30 to DELTA DUE TO START TEMP */
       {
         regime = 2;
         Serial.print("              CHANGE TO REGIME 2               ");
@@ -116,7 +118,7 @@ void loop() {
     }
     else if (regime == 2)
     {
-      if ( (temperature - oldTemp) < 0  && temperature < 60) // executes if coasting doesn't work; should only execute if something went wrong
+      /* if ( (temperature - oldTemp) < 0  && temperature < 60) // executes if coasting doesn't work; should only execute if something went wrong
       {
         decreaseCount += 1;
         if (decreaseCount > 100) {
@@ -130,8 +132,8 @@ void loop() {
       else
       {
         decreaseCount = 0;
-      }
-      if (abs(temperature - 60) <= 3)
+      } */
+      if (abs(temperature - 60) <= 5)
       {
         regime = 3;
         steadyState = millis(); // starts 60 second timer
@@ -139,7 +141,7 @@ void loop() {
     }
     else if (regime == 3)
     {
-      if ( (steadyState - millis()) >= 60000 )
+      if ( (millis() - steadyState) >= 60000 )
       {
         regime = 4;
         digitalWrite(relay1, LOW);
@@ -147,9 +149,10 @@ void loop() {
     }
     else if (regime == 4)
     {
-      if (temperature < 40)
+      if (temperature < 26)
       {
         regime = 0;
+        STATE = false;
       }
     }
   } 
@@ -175,7 +178,7 @@ float readTemperature() {
 }
 
 // Function to control LEDs
-void LEDControl(double temperature) {
+void LEDControl() {
   if (regime != 0)
   {
     digitalWrite(RED, HIGH);
