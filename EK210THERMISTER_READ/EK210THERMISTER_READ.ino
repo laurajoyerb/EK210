@@ -22,6 +22,8 @@ bool switched = false;  // For button edge detection
 // Regime 4 is cooling back down
 int regime = 0;
 
+int decreaseCount = 0;  // Counts number of cycles the temperature decreases
+
 // Timer
 double startTime = millis();
 double previousTime = millis();
@@ -116,10 +118,18 @@ void loop() {
     {
       if ( (temperature - oldTemp) < 0  && temperature < 60) // executes if coasting doesn't work; should only execute if something went wrong
       {
-        double diff = 60 - temperature;
-        digitalWrite(relay1, HIGH);
-        delay(10000 * diff/5); // heats for 10 seconds for every 5ºC increase that is needed
-        digitalWrite(relay1, LOW);
+        decreaseCount += 1;
+        if (decreaseCount > 100) {
+          decreaseCount = 0;
+          double diff = 60 - temperature;
+          digitalWrite(relay1, HIGH);
+          delay(10000 * diff/5); // heats for 10 seconds for every 5ºC increase that is needed
+          digitalWrite(relay1, LOW);
+        }
+      }
+      else
+      {
+        decreaseCount = 0;
       }
       if (abs(temperature - 60) <= 3)
       {
