@@ -81,6 +81,7 @@ void loop() {
       if (!STATE)
       {
         regime = 0;
+        digitalWrite(relay1, LOW);
       }
     }
   }
@@ -140,7 +141,7 @@ void loop() {
     }
     else if (regime == 3)
     {
-      if ( (steadyState - millis()) == 60000 )
+      if ( (steadyState - millis()) >= 60000 )
       {
         regime = 4;
         digitalWrite(relay1, LOW);
@@ -153,7 +154,6 @@ void loop() {
         regime = 0;
       }
     }
-    delay(500);
   } 
 }
 
