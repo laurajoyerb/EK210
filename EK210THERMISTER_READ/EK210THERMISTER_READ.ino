@@ -8,16 +8,15 @@ const int TREAD = A0; // THERMISTOR READ
 const int relay1 = 7; // RELAY PIN
 const int BUTTON = 9; // BUTTON PIN
 
-double temperature = 0;
-double oldTemp;
+double temperature = 0; // Setup variable to store current temperature
+double oldTemp;         // Setup variable to store previous variable for temp change.
 
 // Heating State
-bool STATE = false;
-bool switched = false; //For button edge detection
+bool STATE = false;     // For turning on and off heating. Backup for safety.
+bool switched = false;  // For button edge detection
 
 // Regime 0 is not running
-// Regime 1 is essentially a dummy stage too go to regime 99 because it wasn't working
-// Regime 99 is heating to 30ºish degrees
+// Regime 1 is heating to 30ºish degrees
 // Regime 2 is coasting to 60ºC
 // Regime 3 is holding temp for 60 seconds
 // Regime 4 is cooling back down
@@ -28,8 +27,6 @@ double startTime = millis();
 double previousTime = millis();
 double currentTime = 0;
 double steadyState;
-
-long interval = 500.;
 
 #define THERMISTORPIN A0         
 // resistance at 25 degrees C
@@ -108,31 +105,22 @@ void loop() {
     }
     else if (regime == 1)
     {
-      if (temperature > 20)
-      {
-        regime = 99;
-        Serial.print("              CHANGE TO REGIME 10               ");
-        digitalWrite(relay1, HIGH); // keeps power on
-      }
-    }
-    else if (regime == 99)
-    {
       if (temperature > 30)
       {
         regime = 2;
         Serial.print("              CHANGE TO REGIME 2               ");
-        digitalWrite(relay1, LOW); // turns off power to begin coasting
+        digitalWrite(relay1, LOW); // keeps power on
       }
     }
     else if (regime == 2)
     {
-//      if ( (temperature - oldTemp) < 0  && temperature < 60) // executes if coasting doesn't work; should only execute if something went wrong
-//      {
-//        double diff = 60 - temperature;
-//        digitalWrite(relay1, HIGH);
-//        delay(10000 * diff/5); // heats for 10 seconds for every 5ºC increase that is needed
-//        digitalWrite(relay1, LOW);
-//      }
+      if ( (temperature - oldTemp) < 0  && temperature < 60) // executes if coasting doesn't work; should only execute if something went wrong
+      {
+        double diff = 60 - temperature;
+        digitalWrite(relay1, HIGH);
+        delay(10000 * diff/5); // heats for 10 seconds for every 5ºC increase that is needed
+        digitalWrite(relay1, LOW);
+      }
       if (abs(temperature - 60) <= 3)
       {
         regime = 3;
@@ -159,19 +147,19 @@ void loop() {
 
 // Function to read temperature
 float readTemperature() {
-  digitalWrite(TPOWER, HIGH); //powers the thermister so that it can be read
-  int tValue = analogRead(TREAD); //reads the voltage in the middle of the voltage devider
+  digitalWrite(TPOWER, HIGH); // Powers the thermister so that it can be read
+  int tValue = analogRead(TREAD); // Reads the voltage in the middle of the voltage devider
   currentTime = millis();
-  digitalWrite(TPOWER, LOW);  //turns off power to the thermister so that it doesn't heat up
-  double tResistance = SERIESRESISTOR * (1023./tValue - 1); //converts the ADC value from between 0-1023 to the value of the resistance of the thermister
+  digitalWrite(TPOWER, LOW);  // Turns off power to the thermister so that it doesn't heat up
+  double tResistance = SERIESRESISTOR * (1023./tValue - 1); // Converts the ADC value from between 0-1023 to the value of the resistance of the thermister
 
-  float steinhart;
-  steinhart = tResistance / THERMISTORNOMINAL;     // (R/Ro)
-  steinhart = log(steinhart);                  // ln(R/Ro)
-  steinhart /= BCOEFFICIENT;                   // 1/B * ln(R/Ro)
+  float steinhart;                                  //ALL MATH EXPLAINED BELOW
+  steinhart = tResistance / THERMISTORNOMINAL;      // (R/Ro)
+  steinhart = log(steinhart);                       // ln(R/Ro)
+  steinhart /= BCOEFFICIENT;                        // 1/B * ln(R/Ro)
   steinhart += 1.0 / (TEMPERATURENOMINAL + 273.15); // + (1/To)
-  steinhart = 1.0 / steinhart;                 // Invert
-  steinhart -= 273.15; 
+  steinhart = 1.0 / steinhart;                      // Invert
+  steinhart -= 273.15;                              // Convert from K to C
 
   return steinhart;
 }
@@ -191,7 +179,7 @@ void LEDControl(double temperature) {
   {
     digitalWrite(GREEN, HIGH);
   }
-    else
+  else 
   {
     digitalWrite(GREEN, LOW);
   }
