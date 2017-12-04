@@ -44,6 +44,7 @@ double steadyState;
 // the value of the 'other' resistor
 #define SERIESRESISTOR 10000       
 
+bool testMode = true; //Change to false to disable the serial
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -56,20 +57,14 @@ void setup() {
 
   digitalWrite(relay1, LOW);
   digitalWrite(relay1, LOW);
-  
-  Serial.begin(9600); //Starts serial connection so temperature can be sent to computer
-  Serial.print("              Running the setup function!                  ");
-  Serial.println("");
+  if (testMode) 
+  {
+    Serial.begin(9600); //Starts serial connection so temperature can be sent to computer
+  }
 }
 
 // the loop function runs over and over again forever
 void loop() {
-  
-  Serial.print(STATE);
-  Serial.print(" ");
-  Serial.print(regime);
-  Serial.println("");
-  
   // BUTTON CONTROL
   if (digitalRead(BUTTON) == LOW) 
   {
@@ -95,8 +90,11 @@ void loop() {
   temperature = readTemperature(); //Reads thermistor
   
   // Printing Stuff
-  printData(temperature);
-
+  if (testMode)
+  {
+    printData(temperature);
+  }
+  
   LEDControl();
 
   if (STATE) // only executes if button has been pushed and kill command has not been given
@@ -112,7 +110,6 @@ void loop() {
       if (temperature > (startTemp + 5.)) /* Changed from 30 to DELTA DUE TO START TEMP */
       {
         regime = 2;
-        Serial.print("              CHANGE TO REGIME 2               ");
         digitalWrite(relay1, LOW); // keeps power on
       }
     }
@@ -199,6 +196,13 @@ void LEDControl() {
 }
 
 void printData(double temperature) {
+  // Printing State and Regime for troubleshooting
+  Serial.print(STATE);
+  Serial.print(" ");
+  Serial.print(regime);
+  Serial.println("");
+
+  // Printing Temperature and Time for data
   Serial.print(temperature); //Sends temp to computer
   Serial.print(" ");
   Serial.print((currentTime - startTime)/1000);
