@@ -20,7 +20,6 @@ bool switched = false;  // For button edge detection
 // Regime 1 is heating to 30ºish degrees
 // Regime 2 is coasting to 60ºC
 // Regime 3 is holding temp for 60 seconds
-// Regime 4 is cooling back down
 int regime = 0;
 
 int decreaseCount = 0;  // Counts number of cycles the temperature decreases
