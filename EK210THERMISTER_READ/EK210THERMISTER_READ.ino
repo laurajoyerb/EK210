@@ -87,6 +87,13 @@ void loop() {
 
   oldTemp = temperature;
   temperature = readTemperature(); //Reads thermistor
+
+  if(temperature < 0)
+  {
+    STATE = false;
+    regime = 0;
+    digitalWrite(relay1, LOW);
+  }
   
   // Printing Stuff
   if (testMode)
@@ -103,13 +110,13 @@ void loop() {
       startTemp = temperature;
       regime = 1;
       Serial.print("Stop temperature: ");
-      Serial.print(0.507*startTemp + 21.13);
+      Serial.print(0.507*startTemp + 18);
       Serial.println("");
       digitalWrite(relay1, HIGH); // starts heating
     }
     else if (regime == 1)
     {
-      if (temperature > (0.507*startTemp + 20)) // stop = 0.507 *start + 21.13 is fit found from current bad data, rounded down for insulation (foam)
+      if (temperature > (0.507*startTemp + 18)) // stop = 0.507 *start + 21.13 is fit found from current bad data, rounded down for insulation (foam)
       {
         regime = 2;
         digitalWrite(relay1, LOW); // keeps power on
@@ -144,6 +151,7 @@ void loop() {
       {
         regime = 0;
         digitalWrite(relay1, LOW);
+        STATE = false;
       }
     }
   } 
@@ -194,7 +202,7 @@ void printData(double temperature) {
   Serial.print(STATE);
   Serial.print(" ");
   Serial.print(regime);
-  Serial.println("");
+  Serial.print(" ");
 
   // Printing Temperature and Time for data
   Serial.print(temperature); //Sends temp to computer
