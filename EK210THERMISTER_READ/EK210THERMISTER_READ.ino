@@ -223,9 +223,9 @@ void printData(double temperature) {
   Serial.print(" ");
 
   // Printing Temperature and Time for data
-  Serial.print(temperature); //Sends temp to computer
-  Serial.print(" ");
   Serial.print((currentTime - startTime)/1000);
+  Serial.print(" ");
+  Serial.print(temperature); //Sends temp to computer
   Serial.println("");
 }
 
