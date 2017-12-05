@@ -115,7 +115,7 @@ void loop() {
       Serial.print("Stop temperature: ");
       if (temperature > 36)
       {
-        Serial.print(startTemp + 3);
+        Serial.print(startTemp + 0.07*(abs(60 - startTemp)));
       }
       else
       {
@@ -128,7 +128,7 @@ void loop() {
     {
       if(temperature > 36)
       {
-        if (temperature > startTemp + 3)
+        if (temperature > startTemp + 0.07*(abs(60 - startTemp)))
         {
           regime = 2;
           digitalWrite(relay1, LOW);
@@ -142,21 +142,6 @@ void loop() {
     }
     else if (regime == 2)
     {
-      /* if ( (temperature - oldTemp) < 0  && temperature < 60) // executes if coasting doesn't work; should only execute if something went wrong
-      {
-        decreaseCount += 1;
-        if (decreaseCount > 100) {
-          decreaseCount = 0;
-          double diff = 60 - temperature;
-          digitalWrite(relay1, HIGH);
-          delay(10000 * diff/5); // heats for 10 seconds for every 5ºC increase that is needed
-          digitalWrite(relay1, LOW);
-        }
-      }
-      else
-      {
-        decreaseCount = 0;
-      } */
       if (abs(temperature - 60) <= 5)
       {
         regime = 3;
