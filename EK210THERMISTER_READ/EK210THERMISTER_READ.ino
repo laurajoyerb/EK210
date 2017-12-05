@@ -1,12 +1,12 @@
 #include <math.h>
 
 // PIN VALUES
-const int RED = 2;    // RED LED
-const int GREEN = 3;  // GREEN LED
-const int TPOWER = 8; // THERMISTOR POWER
-const int TREAD = A0; // THERMISTOR READ
-const int relay1 = 7; // RELAY PIN
-const int BUTTON = 9; // BUTTON PIN
+const int RED = 2;      // RED LED
+const int GREEN = 3;    // GREEN LED
+const int TPOWER = 8;   // THERMISTOR POWER
+const int TREAD = A0;   // THERMISTOR READ
+const int relay1 = 7;   // RELAY PIN
+const int BUTTON = 9;   // BUTTON PIN
 
 double temperature = 0; // Setup variable to store current temperature
 double oldTemp;         // Setup variable to store previous variable for temp change.
@@ -27,6 +27,7 @@ int decreaseCount = 0;  // Counts number of cycles the temperature decreases
 // Timer
 double startTime = millis();
 double previousTime = millis();
+double intervalTime = millis();
 double currentTime = 0;
 double steadyState;
 
@@ -43,8 +44,6 @@ double steadyState;
 // the value of the 'other' resistor
 #define SERIESRESISTOR 10000       
 
-bool testMode = true; //Change to false to disable the serial
-
 // the setup function runs once when you press reset or power the board
 void setup() {
   pinMode(RED, OUTPUT);
@@ -56,10 +55,8 @@ void setup() {
 
   digitalWrite(relay1, LOW);
   digitalWrite(relay1, LOW);
-  if (testMode) 
-  {
-    Serial.begin(9600); //Starts serial connection so temperature can be sent to computer
-  }
+ 
+  Serial.begin(9600); //Starts serial connection so temperature can be sent to computer
 }
 
 // the loop function runs over and over again forever
@@ -96,8 +93,9 @@ void loop() {
   }
   
   // Printing Stuff
-  if (testMode)
+  if (millis() - intervalTime >= 500.)
   {
+    intervalTime = millis();
     printData(temperature);
   }
   
@@ -159,10 +157,10 @@ void loop() {
 
 // Function to read temperature
 float readTemperature() {
-  digitalWrite(TPOWER, HIGH); // Powers the thermister so that it can be read
-  int tValue = analogRead(TREAD); // Reads the voltage in the middle of the voltage devider
+  digitalWrite(TPOWER, HIGH);       // Powers the thermister so that it can be read
+  int tValue = analogRead(TREAD);   // Reads the voltage in the middle of the voltage devider
   currentTime = millis();
-  digitalWrite(TPOWER, LOW);  // Turns off power to the thermister so that it doesn't heat up
+  digitalWrite(TPOWER, LOW);        // Turns off power to the thermister so that it doesn't heat up
   double tResistance = SERIESRESISTOR * (1023./tValue - 1); // Converts the ADC value from between 0-1023 to the value of the resistance of the thermister
 
   float steinhart;                                  //ALL MATH EXPLAINED BELOW
