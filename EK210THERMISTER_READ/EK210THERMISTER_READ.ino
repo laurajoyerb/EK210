@@ -114,10 +114,18 @@ void loop() {
     }
     else if (regime == 1)
     {
-      if (temperature > (0.507*startTemp + 18)) // stop = 0.507 *start + 21.13 is fit found from current bad data, rounded down for insulation (foam)
+      if(temperature > 36)
+      {
+        if (temperature > startTemp + 3)
+        {
+          regime = 2;
+          digitalWrite(relay1, LOW);
+        }
+      }
+      else if (temperature > (0.507*startTemp + 18)) // stop = 0.507 *start + 21.13 is fit found from current bad data, rounded down for insulation (foam)
       {
         regime = 2;
-        digitalWrite(relay1, LOW); // keeps power on
+        digitalWrite(relay1, LOW);
       }
     }
     else if (regime == 2)
@@ -203,9 +211,9 @@ void printData(double temperature) {
   Serial.print(" ");
 
   // Printing Temperature and Time for data
-  Serial.print((currentTime - startTime)/1000); //Sends temp to computer
+  Serial.print(temperature); //Sends temp to computer
   Serial.print(" ");
-  Serial.print(temperature);
+  Serial.print((currentTime - startTime)/1000);
   Serial.println("");
 }
 
