@@ -103,11 +103,14 @@ void loop() {
     {
       startTemp = temperature;
       regime = 1;
+      Serial.print("Stop temperature: ");
+      Serial.print(0.507*startTemp + 21.13);
+      Serial.println("");
       digitalWrite(relay1, HIGH); // starts heating
     }
     else if (regime == 1)
     {
-      if (temperature > (startTemp + 5.)) /* Changed from 30 to DELTA DUE TO START TEMP */
+      if (temperature > (0.507*startTemp + 20)) // stop = 0.507 *start + 21.13 is fit found from current bad data, rounded down for insulation (foam)
       {
         regime = 2;
         digitalWrite(relay1, LOW); // keeps power on
@@ -140,16 +143,8 @@ void loop() {
     {
       if ( (millis() - steadyState) >= 60000 )
       {
-        regime = 4;
-        digitalWrite(relay1, LOW);
-      }
-    }
-    else if (regime == 4)
-    {
-      if (temperature < 26)
-      {
         regime = 0;
-        STATE = false;
+        digitalWrite(relay1, LOW);
       }
     }
   } 
