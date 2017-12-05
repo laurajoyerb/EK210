@@ -108,7 +108,14 @@ void loop() {
       startTemp = temperature;
       regime = 1;
       Serial.print("Stop temperature: ");
-      Serial.print(0.507*startTemp + 18);
+      if (temperature > 36)
+      {
+        Serial.print(startTemp + 3);
+      }
+      else
+      {
+        Serial.print(0.507*startTemp + 18);
+      }
       Serial.println("");
       digitalWrite(relay1, HIGH); // starts heating
     }
