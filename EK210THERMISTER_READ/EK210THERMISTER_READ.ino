@@ -103,6 +103,11 @@ void loop() {
 
   if (STATE) // only executes if button has been pushed and kill command has not been given
   {
+    if (abs(startTemp - 60) <= 3)
+    {
+      regime = 3;
+      steadyState = millis(); // starts 60 second timer
+    }
     if (regime == 0)
     {
       startTemp = temperature;
