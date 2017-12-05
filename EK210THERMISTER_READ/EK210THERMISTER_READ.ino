@@ -11,7 +11,6 @@ const int BUTTON = 9;   // BUTTON PIN
 double temperature = 0; // Setup variable to store current temperature
 double oldTemp;         // Setup variable to store previous variable for temp change.
 double startTemp;       // Setup variable for finding temp to change between regime 1 and 2.
-double stopTemp;
 
 // Heating State
 bool STATE = false;     // For turning on and off heating. Backup for safety.
@@ -109,28 +108,33 @@ void loop() {
       regime = 3;
       steadyState = millis(); // starts 60 second timer
     }
-    else if (startTemp > 36)
-    {
-      stopTemp = startTemp + 0.07*(abs(60 - startTemp));
-      regime = 1;
-    }
-    else
-    {
-      stopTemp = 0.507*startTemp + 18;
-    }
-    
     if (regime == 0)
     {
       startTemp = temperature;
       regime = 1;
       Serial.print("Stop temperature: ");
-      Serial.print(stopTemp);
+      if (temperature > 36)
+      {
+        Serial.print(startTemp + 3);
+      }
+      else
+      {
+        Serial.print(0.507*startTemp + 18);
+      }
       Serial.println("");
       digitalWrite(relay1, HIGH); // starts heating
     }
     else if (regime == 1)
     {
-      if (temperature > stopTemp) // stop = 0.507 *start + 21.13 is fit found from current bad data, rounded down for insulation (foam)
+      if(temperature > 36)
+      {
+        if (temperature > startTemp + 3)
+        {
+          regime = 2;
+          digitalWrite(relay1, LOW);
+        }
+      }
+      else if (temperature > (0.507*startTemp + 18)) // stop = 0.507 *start + 21.13 is fit found from current bad data, rounded down for insulation (foam)
       {
         regime = 2;
         digitalWrite(relay1, LOW);
@@ -138,6 +142,21 @@ void loop() {
     }
     else if (regime == 2)
     {
+      /* if ( (temperature - oldTemp) < 0  && temperature < 60) // executes if coasting doesn't work; should only execute if something went wrong
+      {
+        decreaseCount += 1;
+        if (decreaseCount > 100) {
+          decreaseCount = 0;
+          double diff = 60 - temperature;
+          digitalWrite(relay1, HIGH);
+          delay(10000 * diff/5); // heats for 10 seconds for every 5ºC increase that is needed
+          digitalWrite(relay1, LOW);
+        }
+      }
+      else
+      {
+        decreaseCount = 0;
+      } */
       if (abs(temperature - 60) <= 5)
       {
         regime = 3;
