@@ -109,6 +109,9 @@ void loop() {
     {
       regime = 3;
       stopTemp = startTemp;
+      Serial.print("Stop temperature: ");
+      Serial.print(stopTemp);
+      Serial.println("");
       digitalWrite(relay1, LOW);
       if(!time)
       {
