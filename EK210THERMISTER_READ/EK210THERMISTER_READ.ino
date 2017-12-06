@@ -113,20 +113,20 @@ void loop() {
       startTemp = temperature;
       regime = 1;
       Serial.print("Stop temperature: ");
-      if (temperature > 36)
+      if (temperature > 38)
       {
         Serial.print(startTemp + 0.07*(abs(60 - startTemp)));
       }
       else
       {
-        Serial.print(0.507*startTemp + 18);
+        Serial.print(0.713*startTemp + 10);
       }
       Serial.println("");
       digitalWrite(relay1, HIGH); // starts heating
     }
     else if (regime == 1)
     {
-      if(temperature > 36)
+      if(temperature > 38)
       {
         if (temperature > startTemp + 0.07*(abs(60 - startTemp)))
         {
@@ -134,7 +134,7 @@ void loop() {
           digitalWrite(relay1, LOW);
         }
       }
-      else if (temperature > (0.507*startTemp + 18)) // stop = 0.507 *start + 21.13 is fit found from current bad data, rounded down for insulation (foam)
+      else if (temperature > (0.713*startTemp + 10)) // stop = 0.507 *start + 21.13 is fit found from current bad data, rounded down for insulation (foam)
       {
         regime = 2;
         digitalWrite(relay1, LOW);
