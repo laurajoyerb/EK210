@@ -9,7 +9,6 @@ const int relay1 = 7;   // RELAY PIN
 const int BUTTON = 9;   // BUTTON PIN
 
 double temperature = 0; // Setup variable to store current temperature
-double oldTemp;         // Setup variable to store previous variable for temp change.
 double startTemp;       // Setup variable for finding temp to change between regime 1 and 2.
 double stopTemp;
 
@@ -20,10 +19,8 @@ bool switched = false;  // For button edge detection
 // Regime 0 is not running
 // Regime 1 is heating to 30ºish degrees
 // Regime 2 is coasting to 60ºC
-// Regime 3 is holding temp for 60 seconds
+// Regime 3 is holding temp at 60ºC
 int regime = 0;
-
-int decreaseCount = 0;  // Counts number of cycles the temperature decreases
 
 // Timer
 double startTime = millis();
@@ -31,6 +28,7 @@ double previousTime = millis();
 double intervalTime = millis();
 double currentTime = 0;
 double steadyState;
+bool time = false;
 
 #define THERMISTORPIN A0         
 // resistance at 25 degrees C
@@ -62,6 +60,7 @@ void setup() {
 
 // the loop function runs over and over again forever
 void loop() {
+  
   // BUTTON CONTROL
   if (digitalRead(BUTTON) == LOW) 
   {
@@ -83,10 +82,9 @@ void loop() {
     switched = false;
   }
 
-  oldTemp = temperature;
   temperature = readTemperature(); //Reads thermistor
 
-  if(temperature < 0)
+  if(temperature < 0) // executes if there is an error in temperature reading or in circuitry
   {
     STATE = false;
     regime = 0;
@@ -112,25 +110,18 @@ void loop() {
       Serial.print(stopTemp);
       Serial.println("");
       digitalWrite(relay1, LOW);
-      steadyState = millis(); // starts 60 second timer
+      if (!time)
+      {
+        steadyState = millis(); // starts 60 second timer
+        time = true;
+      }
     }
     if (regime == 0)
     {
       startTemp = temperature;
       regime = 1;
       Serial.print("Stop temperature: ");
-      if (abs(startTemp - 60) <= 3 || startTemp > 60)
-      {
-        stopTemp = startTemp;
-      }
-      else if (startTemp > 38)
-      {
-        stopTemp = startTemp + 0.07*(abs(60 - startTemp));
-      }
-      else
-      {
-        stopTemp = 0.713*startTemp + 12;
-      }
+      stopTemp = 0.713*startTemp + 12;
       Serial.print(stopTemp);
       Serial.println("");
       digitalWrite(relay1, HIGH); // starts heating
@@ -153,10 +144,6 @@ void loop() {
     }
     else if (regime == 3)
     {
-      Serial.print(steadyState);
-      Serial.print(" ");
-      Serial.print(millis());
-      Serial.println("");
       if ( (millis() - steadyState) >= 60000 )
       {
         regime = 0;
