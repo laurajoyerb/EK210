@@ -31,6 +31,7 @@ double previousTime = millis();
 double intervalTime = millis();
 double currentTime = 0;
 double steadyState;
+bool time = false;
 
 #define THERMISTORPIN A0         
 // resistance at 25 degrees C
@@ -109,7 +110,11 @@ void loop() {
       regime = 3;
       stopTemp = startTemp;
       digitalWrite(relay1, LOW);
-      steadyState = millis(); // starts 60 second timer
+      if(!time)
+      {
+        steadyState = millis(); // starts 60 second timer
+        time = true;
+      }
     }
     if (regime == 0)
     {
@@ -120,9 +125,13 @@ void loop() {
       {
         stopTemp = startTemp;
       }
-      else if (startTemp > 38)
+      else if (52 > startTemp > 38)
       {
         stopTemp = startTemp + 0.07*(abs(60 - startTemp));
+      }
+      else if (startTemp > 52)
+      {
+        stopTemp = startTemp + 0.05*(abs(60-startTemp));
       }
       else
       {
@@ -150,13 +159,10 @@ void loop() {
     }
     else if (regime == 3)
     {
-      Serial.print(steadyState);
-      Serial.print(" ");
-      Serial.print(millis());
-      Serial.println("");
       if ( (millis() - steadyState) >= 60000 )
       {
         regime = 0;
+        time = false;
         digitalWrite(relay1, LOW);
         STATE = false;
       }
