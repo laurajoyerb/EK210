@@ -11,6 +11,7 @@ const int BUTTON = 9;   // BUTTON PIN
 double temperature = 0; // Setup variable to store current temperature
 double oldTemp;         // Setup variable to store previous variable for temp change.
 double startTemp;       // Setup variable for finding temp to change between regime 1 and 2.
+double stopTemp;
 
 // Heating State
 bool STATE = false;     // For turning on and off heating. Backup for safety.
@@ -103,9 +104,11 @@ void loop() {
 
   if (STATE) // only executes if button has been pushed and kill command has not been given
   {
-    if (abs(startTemp - 60) <= 3)
+    if (abs(startTemp - 60) <= 3 || startTemp > (60+3))
     {
       regime = 3;
+      stopTemp = startTemp;
+      digitalWrite(relay1, LOW);
       steadyState = millis(); // starts 60 second timer
     }
     if (regime == 0)
@@ -113,28 +116,25 @@ void loop() {
       startTemp = temperature;
       regime = 1;
       Serial.print("Stop temperature: ");
-      if (temperature > 38)
+      if (abs(startTemp - 60) <= 3 || startTemp > 60)
       {
-        Serial.print(startTemp + 0.07*(abs(60 - startTemp)));
+        stopTemp = startTemp;
+      }
+      else if (startTemp > 38)
+      {
+        stopTemp = startTemp + 0.07*(abs(60 - startTemp));
       }
       else
       {
-        Serial.print(0.713*startTemp + 10);
+        stopTemp = 0.713*startTemp + 12;
       }
+      Serial.print(stopTemp);
       Serial.println("");
       digitalWrite(relay1, HIGH); // starts heating
     }
     else if (regime == 1)
     {
-      if(temperature > 38)
-      {
-        if (temperature > startTemp + 0.07*(abs(60 - startTemp)))
-        {
-          regime = 2;
-          digitalWrite(relay1, LOW);
-        }
-      }
-      else if (temperature > (0.713*startTemp + 10)) // stop = 0.507 *start + 21.13 is fit found from current bad data, rounded down for insulation (foam)
+      if (temperature > stopTemp)
       {
         regime = 2;
         digitalWrite(relay1, LOW);
@@ -150,6 +150,10 @@ void loop() {
     }
     else if (regime == 3)
     {
+      Serial.print(steadyState);
+      Serial.print(" ");
+      Serial.print(millis());
+      Serial.println("");
       if ( (millis() - steadyState) >= 60000 )
       {
         regime = 0;
