@@ -10,7 +10,7 @@ const int BUTTON = 9;   // BUTTON PIN
 
 double temperature = 0; // Setup variable to store current temperature
 double startTemp;       // Setup variable for finding temp to change between regime 1 and 2.
-double stopTemp;
+double stopTemp;        // Cut off temperature for initial heating
 
 // Heating State
 bool STATE = false;     // For turning on and off heating. Backup for safety.
@@ -24,7 +24,6 @@ int regime = 0;
 
 // Timer
 double startTime = millis();
-double previousTime = millis();
 double intervalTime = millis();
 double currentTime = 0;
 double steadyState;
@@ -52,7 +51,6 @@ void setup() {
 
   pinMode(BUTTON, INPUT_PULLUP);
 
-  digitalWrite(relay1, LOW);
   digitalWrite(relay1, LOW);
  
   Serial.begin(9600); //Starts serial connection so temperature can be sent to computer
@@ -102,7 +100,7 @@ void loop() {
 
   if (STATE) // only executes if button has been pushed and kill command has not been given
   {
-    if (abs(startTemp - 60) <= 3 || startTemp > (60+3))
+    if (abs(startTemp - 60) <= 3 || startTemp > (60+3)) // If start temp is already hot, program skips to steady state regime
     {
       regime = 3;
       stopTemp = startTemp;
@@ -144,11 +142,23 @@ void loop() {
     }
     else if (regime == 3)
     {
+      // Duty cycle (10 seconds)
+      digitalWrite(relay1, HIGH);
+      delay(10);
+      digitalWrite(relay1, LOW);
+      delay(9990);
+      
       if ( (millis() - steadyState) >= 60000 )
       {
-        regime = 0;
-        digitalWrite(relay1, LOW);
-        STATE = false;
+        steadyState = millis(); // resets timer
+        if(digitalRead(RED) == HIGH)
+        {
+          digitalWrite(RED, LOW);
+        }
+        else
+        {
+          digitalWrite(RED, HIGH);
+        }
       }
     }
   } 
