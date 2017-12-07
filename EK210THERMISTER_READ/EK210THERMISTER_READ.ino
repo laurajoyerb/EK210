@@ -144,6 +144,15 @@ void loop() {
     }
     else if (regime == 2)
     {
+      // Duty cycle (10 seconds)
+      digitalWrite(relay1, HIGH);
+      Serial.print("    On!     ");
+      Serial.println("");
+      delay(500);
+      digitalWrite(relay1, LOW);
+      Serial.print("    Off!     ");
+      Serial.println("");
+      delay(9500);
       if (abs(temperature - 60) <= 5)
       {
         regime = 3;
@@ -158,11 +167,11 @@ void loop() {
       digitalWrite(relay1, HIGH);
       Serial.print("    On!     ");
       Serial.println("");
-      delay(70);
+      delay(500);
       digitalWrite(relay1, LOW);
       Serial.print("    Off!     ");
       Serial.println("");
-      delay(9930);
+      delay(9500);
       
       if ( (millis() - steadyState) >= 60000 )
       {
