@@ -63,6 +63,7 @@ void loop() {
   if (digitalRead(BUTTON) == LOW) 
   {
     startTime = millis();
+    startTemp = readTemperature();
     if (!switched) 
     {
       switched = true;
@@ -81,6 +82,11 @@ void loop() {
   }
 
   temperature = readTemperature(); //Reads thermistor
+
+  if (startTemp < 57 && startTemp > 38)
+  {
+    regime = 3;
+  }
 
   if(temperature < 0) // executes if there is an error in temperature reading or in circuitry
   {
@@ -144,9 +150,13 @@ void loop() {
     {
       // Duty cycle (10 seconds)
       digitalWrite(relay1, HIGH);
-      delay(10);
+      Serial.print("    On!     ");
+      Serial.println("");
+      delay(70);
       digitalWrite(relay1, LOW);
-      delay(9990);
+      Serial.print("    Off!     ");
+      Serial.println("");
+      delay(9930);
       
       if ( (millis() - steadyState) >= 60000 )
       {
