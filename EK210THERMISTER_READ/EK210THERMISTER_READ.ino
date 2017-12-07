@@ -27,7 +27,7 @@ double startTime = millis();
 double intervalTime = millis();
 double currentTime = 0;
 double steadyState;
-bool time = false;
+bool timer = false;
 
 #define THERMISTORPIN A0         
 // resistance at 25 degrees C
@@ -52,6 +52,8 @@ void setup() {
   pinMode(BUTTON, INPUT_PULLUP);
 
   digitalWrite(relay1, LOW);
+  digitalWrite(RED, LOW);
+  digitalWrite(GREEN, LOW);
  
   Serial.begin(9600); //Starts serial connection so temperature can be sent to computer
 }
@@ -71,6 +73,7 @@ void loop() {
       if (!STATE)
       {
         regime = 0;
+        digitalWrite(RED, LOW);
         digitalWrite(relay1, LOW);
       }
     }
@@ -85,6 +88,7 @@ void loop() {
 
   if (startTemp < 57 && startTemp > 38)
   {
+    digitalWrite(RED, HIGH);
     regime = 3;
   }
 
@@ -102,28 +106,28 @@ void loop() {
     printData(temperature);
   }
   
-  LEDControl();
-
   if (STATE) // only executes if button has been pushed and kill command has not been given
   {
     if (abs(startTemp - 60) <= 3 || startTemp > (60+3)) // If start temp is already hot, program skips to steady state regime
     {
       regime = 3;
+      digitalWrite(RED, HIGH);
       stopTemp = startTemp;
       Serial.print("Stop temperature: ");
       Serial.print(stopTemp);
       Serial.println("");
       digitalWrite(relay1, LOW);
-      if (!time)
+      if (!timer)
       {
         steadyState = millis(); // starts 60 second timer
-        time = true;
+        timer = true;
       }
     }
     if (regime == 0)
     {
       startTemp = temperature;
       regime = 1;
+      digitalWrite(RED, HIGH);
       Serial.print("Stop temperature: ");
       stopTemp = 0.713*startTemp + 12;
       Serial.print(stopTemp);
@@ -148,6 +152,8 @@ void loop() {
     }
     else if (regime == 3)
     {
+      digitalWrite(GREEN, HIGH);
+      
       // Duty cycle (10 seconds)
       digitalWrite(relay1, HIGH);
       Serial.print("    On!     ");
@@ -191,27 +197,6 @@ float readTemperature() {
   steinhart -= 273.15;                              // Convert from K to C
 
   return steinhart;
-}
-
-// Function to control LEDs
-void LEDControl() {
-  if (regime != 0)
-  {
-    digitalWrite(RED, HIGH);
-  }
-  else
-  {
-    digitalWrite(RED, LOW);
-  }
-
-  if (regime == 3)
-  {
-    digitalWrite(GREEN, HIGH);
-  }
-  else 
-  {
-    digitalWrite(GREEN, LOW);
-  }
 }
 
 void printData(double temperature) {
