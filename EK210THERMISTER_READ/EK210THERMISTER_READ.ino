@@ -86,12 +86,6 @@ void loop() {
 
   temperature = readTemperature(); //Reads thermistor
 
-  if (startTemp < 57 && startTemp > 38)
-  {
-    digitalWrite(RED, HIGH);
-    regime = 3;
-  }
-
   if(temperature < 0) // executes if there is an error in temperature reading or in circuitry
   {
     STATE = false;
@@ -108,6 +102,11 @@ void loop() {
   
   if (STATE) // only executes if button has been pushed and kill command has not been given
   {
+    if (startTemp < 57 && startTemp > 38)
+      {
+        digitalWrite(RED, HIGH);
+        regime = 3;
+      }
     if (abs(startTemp - 60) <= 3 || startTemp > (60+3)) // If start temp is already hot, program skips to steady state regime
     {
       regime = 3;
@@ -148,11 +147,11 @@ void loop() {
       digitalWrite(relay1, HIGH);
       Serial.print("    On!     ");
       Serial.println("");
-      delay(500);
+      delay(2000);
       digitalWrite(relay1, LOW);
       Serial.print("    Off!     ");
       Serial.println("");
-      delay(9500);
+      delay(8000);
       if (abs(temperature - 60) <= 5)
       {
         regime = 3;
@@ -167,11 +166,11 @@ void loop() {
       digitalWrite(relay1, HIGH);
       Serial.print("    On!     ");
       Serial.println("");
-      delay(500);
+      delay(10000);
       digitalWrite(relay1, LOW);
       Serial.print("    Off!     ");
       Serial.println("");
-      delay(9500);
+      //delay(8000);
       
       if ( (millis() - steadyState) >= 60000 )
       {
