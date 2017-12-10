@@ -28,6 +28,7 @@ double intervalTime = millis();
 double currentTime = 0;
 double coastTime;
 double steadyState;
+double dutyTime = 0;
 bool timer = false;
 
 #define THERMISTORPIN A0         
@@ -114,8 +115,7 @@ void loop() {
       digitalWrite(RED, HIGH);
       stopTemp = startTemp;
       Serial.print("Stop temperature: ");
-      Serial.print(stopTemp);
-      Serial.println("");
+      Serial.println(stopTemp);
       digitalWrite(relay1, LOW);
       if (!timer)
       {
@@ -130,8 +130,7 @@ void loop() {
       digitalWrite(RED, HIGH);
       Serial.print("Stop temperature: ");
       stopTemp = 0.713*startTemp + 12;
-      Serial.print(stopTemp);
-      Serial.println("");
+      Serial.println(stopTemp);
       digitalWrite(relay1, HIGH); // starts heating
     }
     else if (regime == 1)
@@ -146,15 +145,18 @@ void loop() {
     }
     else if (regime == 2)
     {
-      if (abs(coastTime - millis()) > 180000)
+      if (abs(millis() - coastTime) >= 180000)
       {
+        if ( abs(dutyTime - millis()) >= 9600 )
+        {
           // Duty cycle (10 seconds)
-        digitalWrite(relay1, HIGH);
-        Serial.println("    On!     ");
-        delay(400);
-        digitalWrite(relay1, LOW);
-        Serial.println("    Off!     ");
-        delay(9600); 
+          digitalWrite(relay1, HIGH);
+          Serial.println("    On!     ");
+          delay(400);
+          digitalWrite(relay1, LOW);
+          Serial.println("    Off!     ");
+          dutyTime = millis();
+        }
       }
       if (abs(temperature - 60) <= 5)
       {
@@ -166,19 +168,18 @@ void loop() {
     {
       digitalWrite(GREEN, HIGH);
 
-//      if ( (millis() - dutyTime) >= 9600)
-//      {
-//        
-//      }
-      // Duty cycle (10 seconds)
-      digitalWrite(relay1, HIGH);
-      Serial.println("    On!     ");
-      delay(400);
-      digitalWrite(relay1, LOW);
-      Serial.println("    Off!     ");
-      delay(9600);
+      if ( abs(millis() - dutyTime) >= 9600)
+      {
+        // Duty cycle (10 seconds)
+          digitalWrite(relay1, HIGH);
+          Serial.println("    On!     ");
+          delay(400);
+          digitalWrite(relay1, LOW);
+          Serial.println("    Off!     ");
+          dutyTime = millis();
+      }
       
-      if ( (millis() - steadyState) >= 60000 )
+      if ( abs(millis() - steadyState) >= 60000 )
       {
         steadyState = millis(); // resets timer
         if(digitalRead(RED) == HIGH)
