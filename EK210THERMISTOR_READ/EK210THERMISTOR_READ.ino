@@ -93,6 +93,13 @@ void loop() {
     STATE = false;
     regime = 0;
     digitalWrite(relay1, LOW);
+    digitalWrite(GREEN, LOW);
+    digitalWrite(RED, LOW);
+  }
+
+  if (temperature < 55)
+  {
+    digitalWrite(GREEN, LOW);
   }
   
   // Printing Stuff
@@ -114,8 +121,6 @@ void loop() {
       regime = 3;
       digitalWrite(RED, HIGH);
       stopTemp = startTemp;
-      Serial.print("Stop temperature: ");
-      Serial.println(stopTemp);
       digitalWrite(relay1, LOW);
       if (!timer)
       {
